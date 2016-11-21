@@ -6,9 +6,9 @@ go:
 - 1.7
 
 install:
+  - go get -d -v ./...
   - make devdeps
   - make gogenerate
-  - go get -d -v ./...
   - go build ./...
 
 # Travis CI executes go test by default in case there is no script phase
