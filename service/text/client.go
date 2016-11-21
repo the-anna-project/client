@@ -8,13 +8,12 @@ import (
 
 	textoutputobject "github.com/the-anna-project/output/object/text"
 	apispec "github.com/the-anna-project/spec/api"
-	systemspec "github.com/the-anna-project/spec/legacy"
 	objectspec "github.com/the-anna-project/spec/object"
 	servicespec "github.com/the-anna-project/spec/service"
 )
 
 // New creates a new text endpoint service.
-func New() systemspec.TextInterfaceClient {
+func New() servicespec.EndpointService {
 	return &client{}
 }
 
@@ -25,9 +24,10 @@ type client struct {
 
 	// Settings.
 
-	// gRPCAddr is the host:port representation based on the golang convention
-	// for net.Listen to serve gRPC traffic.
-	gRPCAddr string
+	// address is the host:port representation based on the golang convention for
+	// net.Listen to serve gRPC traffic.
+	address  string
+	context  *context.Context
 	metadata map[string]string
 }
 
@@ -42,6 +42,12 @@ func (c *client) Boot() {
 		"name": "endpoint",
 		"type": "service",
 	}
+
+	// TODO context.WIthCancel
+	// TODO handle CancelFunc
+	// TODO handle Shutdown
+	c.context = context.Background()
+	c.StreamText(context)
 }
 
 func (c *client) DecodeResponse(streamTextResponse *StreamTextResponse) (objectspec.TextOutput, error) {
@@ -69,19 +75,26 @@ func (c *client) Service() servicespec.ServiceCollection {
 	return c.serviceCollection
 }
 
-func (c *client) SetGRPCAddress(gRPCAddr string) {
-	c.gRPCAddr = gRPCAddr
+func (c *client) SetAddress(address string) {
+	c.address = address
 }
 
 func (c *client) SetServiceCollection(sc servicespec.ServiceCollection) {
 	c.serviceCollection = sc
 }
 
+func (s *service) Shutdown() {
+	s.shutdownOnce.Do(func() {
+		c.context.Cancel()
+	})
+}
+
+// TODO move to separate file?
 func (c *client) StreamText(ctx context.Context) error {
 	done := make(chan struct{}, 1)
 	fail := make(chan error, 1)
 
-	conn, err := grpc.Dial(c.gRPCAddr, grpc.WithInsecure())
+	conn, err := grpc.Dial(c.address, grpc.WithInsecure())
 	if err != nil {
 		return maskAny(err)
 	}
