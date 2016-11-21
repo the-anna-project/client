@@ -24,4 +24,4 @@ endif
 	@rm -rf /tmp/protoc/ /tmp/protoc.zip
 
 gogenerate:
-	@protoc --proto_path=${GOPATH}/src/github.com/the-anna-project/spec/api --go_out=plugins=grpc,import_path=text:service/endpoint/text/ ${GOPATH}/src/github.com/the-anna-project/spec/api/text_endpoint.proto
+	@protoc --proto_path=${GOPATH}/src/github.com/the-anna-project/spec/api --go_out=plugins=grpc,import_path=text:service/text/ ${GOPATH}/src/github.com/the-anna-project/spec/api/text_endpoint.proto
